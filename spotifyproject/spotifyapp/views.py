@@ -1,9 +1,10 @@
 from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 
 from .forms import RegisterForm
-from .models import Genre, Song, Album
+from .models import Genre, Song, Album, LikeSongs
 
 
 def register_view(request):
@@ -35,4 +36,31 @@ def songs_view(request):
         'songs': songs,
         'genres': genres,
         'selected_genre': genre_id,
+    })
+
+@login_required(login_url='/login/')
+def add_to_like_songs(request, song_id):
+    song = get_object_or_404(Song, pk=song_id)
+    like, created = LikeSongs.objects.get_or_create(user=request.user, song=song)
+    return redirect('like_songs_view')
+
+@login_required(login_url='/login/')
+def remove_to_like_songs(request, song_id):
+    song = get_object_or_404(Song, pk=song_id)
+    like = LikeSongs.objects.filter(user=request.user, song=song).first()
+    if like:
+        like.delete()
+    return redirect('like_songs_view')
+
+@login_required(login_url='/login/')
+def like_songs_view(request):
+    liked_songs  = LikeSongs.objects.all()
+    query = request.GET.get('q')
+    if query:
+        liked_songs = liked_songs.filter(
+            Q(title__icontains=query) |
+            Q(artist__name__icontains=query)
+        )
+    return render(request, 'like_songs.html', {
+        'liked_songs': liked_songs,
     })

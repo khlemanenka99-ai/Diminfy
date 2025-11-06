@@ -21,3 +21,10 @@ class RegisterForm(forms.ModelForm):
         if cleaned_data.get('password') != cleaned_data.get('password2'):
             raise forms.ValidationError("Пароли не совпадают")
         return cleaned_data
+
+class LikeSongForm(forms.ModelForm):
+    password2 = forms.CharField(label='Подтвердите пароль', widget=forms.PasswordInput)
+
+    class Meta:
+        model = User
+        fields = ['username', 'email', 'password']
